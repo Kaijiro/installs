@@ -113,3 +113,8 @@
 - name: Install pyenv
   community.general.homebrew:
     name: pyenv
+
+# Linter Cloudformation
+- name: Install cfn-lint
+  community.general.homebrew:
+    name: cfn-lint
