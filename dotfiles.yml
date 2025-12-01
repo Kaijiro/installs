@@ -1,0 +1,42 @@
+# ============================================================
+# Dotfiles Configuration
+# ============================================================
+# Maps dotfiles to the tools/packages that require them
+#
+# Format:
+#   dotfile_path:
+#     requires: [list of brew packages or commands]
+#     description: what this dotfile configures
+#
+# The dotfile_path is relative to the dotfiles/ directory
+# requires can be brew formula names, cask names, or command names
+
+dotfiles:
+  .gitconfig:
+    requires: [git]
+    description: "Git configuration with aliases and settings"
+
+  .zshrc:
+    requires: [zsh]
+    description: "Base ZSH configuration with oh-my-zsh and Spaceship theme, sources ~/.dotfiles/"
+
+  .vimrc:
+    requires: [vim]
+    description: "Vim editor configuration"
+
+  .tmux.conf:
+    requires: [tmux]
+    description: "Tmux terminal multiplexer configuration"
+
+# Example of dotfiles for future tools:
+#  .config/nvim/init.vim:
+#    requires: [neovim]
+#    description: "Neovim configuration"
+#
+#  .docker/config.json:
+#    requires: [docker]
+#    description: "Docker CLI configuration"
+#
+#  .aws/config:
+#    requires: [awscli]
+#    description: "AWS CLI configuration template"

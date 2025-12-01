@@ -1,0 +1,35 @@
+# ============================================================
+# Base Installation Profile
+# ============================================================
+# Essential tools and applications for any setup
+# Note: oh-my-zsh, Spaceship theme require manual setup
+# (consider creating a post-install script)
+
+# --- Taps -----------------------------------------------
+tap "homebrew/cask-fonts"
+
+# --- CLI Tools (Formulae) --------------------------------
+brew "git"              # Version control
+brew "jq"               # JSON processor
+brew "wget"             # File downloader
+brew "curl"             # Transfer data with URLs
+brew "zsh"              # Shell
+
+# --- Fonts ----------------------------------------------
+cask "font-fira-code-nerd-font"
+
+# --- Applications (Casks) -------------------------------
+
+# Development
+cask "jetbrains-toolbox"    # JetBrains IDE manager
+cask "sublime-text"         # Text editor
+cask "postman"              # API development
+cask "docker"               # Containerization
+
+# Productivity
+cask "raycast"              # Launcher & productivity
+cask "stats"                # macOS system monitor
+
+# Browsers & Media
+cask "brave-browser"        # Privacy-focused browser
+cask "deezer"               # Music streaming

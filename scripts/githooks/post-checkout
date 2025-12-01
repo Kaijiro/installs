@@ -1,0 +1,65 @@
+#!/bin/bash
+# ==========================================
+# 🪝 Global post-checkout hook
+# Prompts for SSH identity selection for GitHub
+# and updates the remote URL accordingly
+# ==========================================
+
+# Allows us to read user input below, assigns stdin to keyboard
+exec < /dev/tty
+
+# Check if already configured (only ask once)
+if [ -f .git/ssh_choice_done ]; then
+  exit 0
+fi
+
+# --- Colors ---
+CYAN="\033[0;36m"
+GREEN="\033[0;32m"
+RED="\033[0;31m"
+YELLOW="\033[1;33m"
+RESET="\033[0m"
+
+SSH_CONFIG="$HOME/.ssh/config"
+
+# --- Check for gum installation ---
+if ! command -v gum >/dev/null 2>&1; then
+  echo -e "${RED}Error: gum is not installed.${RESET}"
+  exit 1
+fi
+
+# --- Extract hosts pointing to github.com ---
+HOSTS=$(awk '
+  $1 == "Host" { current_host = $2 }
+  $1 == "HostName" && $2 == "github.com" { print current_host }
+' "$SSH_CONFIG")
+
+# Exit if no hosts found
+if [ -z "$HOSTS" ]; then
+  echo -e "${YELLOW}No hosts pointing to github.com found in $SSH_CONFIG.${RESET}"
+  exit 0
+fi
+
+# --- Prompt user to choose SSH identity ---
+CHOICE=$(echo "$HOSTS" | gum choose --height=10 --item.foreground="cyan" --cursor.foreground="green" --prompt="Choose SSH identity: ")
+
+if [ -z "$CHOICE" ]; then
+  echo -e "${RED}No choice made.${RESET}"
+  exit 1
+fi
+
+# --- Update remote URL ---
+# Get current URL
+OLD_URL=$(git remote get-url origin)
+
+# Convert URL by replacing github.com with chosen host
+NEW_URL=$(echo "$OLD_URL" | sed "s/git@github\.com:/git@${CHOICE}:/")
+
+git remote set-url origin "$NEW_URL"
+
+echo -e "${GREEN}Remote updated:${RESET}"
+echo "  $OLD_URL"
+echo "→ $NEW_URL"
+
+# Mark as configured
+touch .git/ssh_choice_done

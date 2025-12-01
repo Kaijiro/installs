@@ -1,0 +1,40 @@
+[user]
+	name = Tristan Lasalle
+	email = ""
+
+[init]
+	defaultBranch = main
+
+[core]
+	editor = vim
+	hooksPath = ~/.githooks
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+	followTags = true
+
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+
+[diff]
+	algorithm = histogram
+    colorMoved = plain
+    mnemonicPrefix = true
+    renames = true
+
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+
+[alias]
+	logad = log --oneline --graph --all --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)'
+    grepn = grep -n
+
+[help]
+	autoCorrect = prompt

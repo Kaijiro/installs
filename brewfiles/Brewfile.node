@@ -1,0 +1,9 @@
+# ============================================================
+# Node.js Profile
+# ============================================================
+# Tools for Node.js development
+
+# Note: Node.js versions are managed via nvm (Node Version Manager)
+# nvm will be installed via post-install script
+# npm comes bundled with Node.js
+# yarn can be installed via npm or corepack if needed

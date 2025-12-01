@@ -1,0 +1,68 @@
+# ============================================================
+# Post-Install Scripts Configuration
+# ============================================================
+# Define scripts to run after tools are installed
+#
+# Fields:
+#   script: Path to script file (relative to post-install/)
+#   requires: List of commands/tools that must be installed in THIS run (optional)
+#   profiles: List of profiles that trigger this script (optional)
+#   interactive: Whether script asks for user input (default: false)
+#   description: What the script does
+#   os: Limit to specific OS (darwin, linux) - optional
+#   priority: Execution order (lower = earlier, default: 50)
+#
+# Note: Scripts run if EITHER requirements OR profiles match
+
+scripts:
+  oh-my-zsh:
+    script: oh-my-zsh-setup.sh
+    requires: [zsh, git, curl]
+    description: "Install oh-my-zsh shell framework"
+    interactive: false
+    priority: 10
+
+  spaceship-theme:
+    script: spaceship-theme.sh
+    requires: [git]
+    description: "Install Spaceship prompt theme for oh-my-zsh"
+    interactive: false
+    priority: 20
+    # Note: Depends on oh-my-zsh being installed, checked in script
+
+  dotfiles-setup:
+    script: dotfiles-setup.sh
+    requires: []
+    description: "Symlink dotfiles from dotfiles/ to home directory"
+    interactive: false
+    priority: 30
+
+  githooks-setup:
+    script: githooks-setup.sh
+    requires: [git]
+    description: "Symlink global git hooks from scripts/githooks"
+    interactive: false
+    priority: 35
+
+  # --- Profile-based scripts (no tool requirements) --------
+
+  godots-install:
+    script: godots-install.sh
+    profiles: [gamedev]
+    description: "Install Godots (Godot version manager)"
+    interactive: false
+    priority: 15
+
+  sdkman-install:
+    script: sdkman-install.sh
+    profiles: [java]
+    description: "Install SDKMAN (Java/JVM version manager)"
+    interactive: false
+    priority: 15
+
+  nvm-install:
+    script: nvm-install.sh
+    profiles: [node]
+    description: "Install nvm (Node.js version manager)"
+    interactive: false
+    priority: 15

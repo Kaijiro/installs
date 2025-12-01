@@ -1,0 +1,10 @@
+# ============================================================
+# AWS Profile
+# ============================================================
+# Tools for AWS cloud development and infrastructure
+
+# --- AWS CLI & Tools -------------------------------------
+
+brew "awscli"            # AWS Command Line Interface (v2)
+brew "cfn-lint"          # CloudFormation linter
+cask "aws-vault"         # Securely store and access AWS credentials

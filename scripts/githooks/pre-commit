@@ -1,0 +1,60 @@
+#!/bin/bash
+# ==========================================
+# 🪝 Global pre-commit hook
+# Checks for the presence of "TODO" (case-insensitive)
+# and displays the affected lines before each commit
+# ==========================================
+
+# Allows us to read user input below, assigns stdin to keyboard
+exec < /dev/tty
+
+# --- Colors ---
+RED="\033[0;31m"
+YELLOW="\033[1;33m"
+GREEN="\033[0;32m"
+CYAN="\033[0;36m"
+BOLD="\033[1m"
+RESET="\033[0m"
+
+# --- List staged files ---
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|ts|py|sh|go|java|c|cpp|rb|php|html|css|jsx|tsx|md)$')
+
+# Exit if no relevant files are found
+[ -z "$files" ] && exit 0
+
+found_todo=false
+
+for file in $files; do
+  # Display only TODOs in the staged content
+  # and color the "TODO" part
+  matches=$(git show ":$file" | grep -in --color=never -E "TODO" || true)
+  if [ -n "$matches" ]; then
+    if [ "$found_todo" = false ]; then
+      echo -e "\n${YELLOW}⚠️  TODOs were detected in the following files:${RESET}\n"
+      found_todo=true
+    fi
+    echo -e "${BOLD}${CYAN}$file${RESET}:"
+    echo "$matches" | while IFS= read -r line; do
+      # Separate line number and content
+      lineno=$(echo "$line" | cut -d: -f1)
+      content=$(echo "$line" | cut -d: -f2-)
+      echo -e "  ${YELLOW}Line $lineno:${RESET} $content"
+    done
+    echo ""
+  fi
+done
+
+# If TODOs were found, ask for confirmation
+if [ "$found_todo" = true ]; then
+  echo -e "${RED}Do you really wish to proceed with the commit?${RESET}"
+  read -p "(y/N) " response
+  case "$response" in
+    [yY][eE][sS]|[yY])
+      echo -e "${GREEN}✅ Commit authorized despite TODOs.${RESET}\n"
+      ;;
+    *)
+      echo -e "${RED}❌ Commit cancelled.${RESET}\n"
+      exit 1
+      ;;
+  esac
+fi

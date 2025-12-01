@@ -1,0 +1,15 @@
+# ============================================================
+# Game Development Profile
+# ============================================================
+# Tools for game development and creative content creation
+
+# Note: Godot is managed via Godots (version manager)
+
+# --- Graphics & Image Editing ----------------------------
+
+cask "gimp"              # Open-source image editor
+cask "blender"           # 3D modeling and animation
+
+# --- Audio Editing ---------------------------------------
+
+cask "audacity"          # Open-source audio editor
