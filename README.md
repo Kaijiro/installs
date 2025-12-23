@@ -21,7 +21,7 @@ Automated setup for development environments on new computers using Homebrew and
 
 ```bash
 # Clone this repository
-git clone <your-repo-url>
+git clone https://github.com/Kaijiro/installs.git
 cd installs
 
 # Run the bootstrap script
@@ -87,29 +87,6 @@ Select the profiles to install:
 [ ] gamedev
 ```
 
-### Version Managers
-
-After installation, version managers provide commands like:
-
-```bash
-# Node.js (nvm)
-nvm install 20
-nvm use 20
-nvm alias default 20
-
-# Python (pyenv)
-pyenv install 3.12.0
-pyenv global 3.12.0
-
-# Java (SDKMAN)
-sdk install java 21
-sdk default java 21
-
-# Godot (Godots)
-godots install 4.3
-godots use 4.3
-```
-
 ### Dotfiles
 
 Dotfiles are automatically symlinked based on installed tools:
@@ -125,6 +102,44 @@ Dotfiles are automatically symlinked based on installed tools:
 
 **Note**: Original files are backed up to `~/.dotfiles_backup_<timestamp>/`
 
+### Shell Configuration
+
+The setup uses a modular approach to shell configuration:
+
+#### Automatic Configuration
+
+The `.zshrc` dotfile automatically:
+- Loads Oh My Zsh with the Spaceship theme
+- Adds the `scripts/` directory to your PATH (via symlink resolution)
+- Sources all `.zsh` files from `~/.dotfiles/` for modular configs
+
+#### Customization
+
+**For personal customizations** (not tracked in git):
+Create a `~/.zshrc.local` file for your local-only settings:
+
+```bash
+# Example ~/.zshrc.local
+export MY_CUSTOM_VAR="value"
+export PATH="$HOME/my-tools:$PATH"
+alias myalias="some-command"
+```
+
+**For modular profile configs** (can be tracked in git):
+Create `.zsh` files in `~/.dotfiles/`:
+
+```bash
+# Example: ~/.dotfiles/nvm.zsh
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Example: ~/.dotfiles/java.zsh
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+```
+
+The post-install scripts automatically create these modular configs for version managers.
+
 ## Project Structure
 
 ```
@@ -132,101 +147,12 @@ Dotfiles are automatically symlinked based on installed tools:
 ├── bootstrap.sh              # Main installation script
 ├── run-post-install.sh       # Post-install script runner
 ├── brewfiles/                # Homebrew bundle files
-│   ├── Brewfile.base
-│   ├── Brewfile.aws
-│   ├── Brewfile.java
-│   ├── Brewfile.node
-│   ├── Brewfile.python
-│   └── Brewfile.gamedev
 ├── post-install/             # Post-installation scripts
-│   ├── oh-my-zsh-setup.sh
-│   ├── spaceship-theme.sh
-│   ├── dotfiles-setup.sh
-│   ├── godots-install.sh
-│   ├── sdkman-install.sh
-│   └── nvm-install.sh
 ├── post-install.yml          # Post-install script configuration
-├── dotfiles/                 # Your dotfiles
-│   └── .gitconfig
+├── dotfiles/                 # Dotfiles
 ├── dotfiles.yml              # Dotfiles metadata
 └── README.md
 ```
-
-## Customization
-
-### Adding a New Profile
-
-1. Create `brewfiles/Brewfile.myprofile`:
-```ruby
-brew "my-tool"
-cask "my-app"
-```
-
-2. (Optional) Add post-install script to `post-install.yml`:
-```yaml
-my-setup:
-  script: my-setup.sh
-  profiles: [myprofile]
-  description: "Setup for my profile"
-  priority: 15
-```
-
-The profile will automatically appear in the selection menu.
-
-### Adding Post-Install Scripts
-
-Add to `post-install.yml`:
-
-```yaml
-my-script:
-  script: my-script.sh
-  requires: [tool-name]         # Run if tool was installed
-  profiles: [profile-name]      # Run if profile selected
-  description: "What it does"
-  interactive: false
-  priority: 50                  # Lower = earlier
-```
-
-Scripts run if **either** requirements or profiles match.
-
-### Shell Configuration
-
-After installation, add these to your `~/.zshrc`:
-
-```bash
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-# SDKMAN
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-# pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-
-# Godots
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-## Troubleshooting
-
-**Homebrew not found after installation**
-```bash
-eval "$(/opt/homebrew/bin/brew shellenv)"  # macOS Apple Silicon
-eval "$(/usr/local/bin/brew shellenv)"     # macOS Intel
-```
-
-**Version manager not found**
-- Restart your shell: `exec $SHELL`
-- Or source your rc file: `source ~/.zshrc`
-
-**Dotfiles not linked**
-- Check `.install-manifest` to see what was installed
-- Manually run: `./post-install/dotfiles-setup.sh`
 
 ## Maintenance
 
@@ -237,13 +163,10 @@ Safe to run multiple times - the bootstrap script is idempotent:
 - Won't reinstall version managers
 - Backs up existing dotfiles before linking
 
-### Updating Tools
-
-```bash
-brew update
-brew upgrade
-```
-
 ## License
 
-Personal setup script - feel free to fork and customize!
+This project is personal and particularly suits my needs. Feel free to take inspiration from it, copy parts of it, fork it
+or even clone it to use as a starting point for your own setup.
+Using it for your own setup is at your own risk though.
+
+Part of this project has been vibe-coded for experimenting with LLMs.

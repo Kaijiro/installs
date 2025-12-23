@@ -49,25 +49,112 @@ case "$ARCH" in
     ;;
 esac
 
-# Get latest release URL
+# Get latest release URLs (zip and checksums)
 echo "📦 Fetching latest Godots release..."
-LATEST_URL=$(curl -s https://api.github.com/repos/mayuso/godots/releases/latest | \
-  grep "browser_download_url.*${OS_TYPE}_${ARCH_TYPE}" | \
+RELEASE_API=$(curl -s https://api.github.com/repos/MakovWait/godots/releases/latest)
+
+# Determine the correct zip file based on OS
+case "$OS_TYPE" in
+  darwin)
+    ZIP_NAME="macOS.zip"
+    ;;
+  linux)
+    ZIP_NAME="LinuxX11.zip"
+    ;;
+  *)
+    echo "⚠️  Unsupported OS: $OS_TYPE"
+    exit 1
+    ;;
+esac
+
+LATEST_URL=$(echo "$RELEASE_API" | \
+  grep "browser_download_url.*${ZIP_NAME}\"" | \
+  cut -d '"' -f 4)
+
+CHECKSUMS_URL=$(echo "$RELEASE_API" | \
+  grep "browser_download_url.*SHA512-SUMS.txt" | \
   cut -d '"' -f 4)
 
 if [[ -z "$LATEST_URL" ]]; then
-  echo "⚠️  Could not find release for ${OS_TYPE}_${ARCH_TYPE}"
-  echo "   Please install manually from: https://github.com/mayuso/godots"
+  echo "⚠️  Could not find release for $OS_TYPE"
+  echo "   Please install manually from: https://github.com/MakovWait/godots"
   exit 1
 fi
 
-# Download and install
+# Download zip file
 echo "📥 Downloading Godots..."
-curl -L "$LATEST_URL" -o /tmp/godots
+TEMP_ZIP=$(mktemp)
+if ! curl -fsSL "$LATEST_URL" -o "$TEMP_ZIP"; then
+  echo "❌ Failed to download Godots"
+  echo "   Please check your internet connection and try again"
+  rm -f "$TEMP_ZIP"
+  exit 1
+fi
+
+# Download and verify checksum if available
+if [[ -n "$CHECKSUMS_URL" ]]; then
+  echo "🔐 Verifying checksum..."
+  CHECKSUMS_FILE=$(mktemp)
+
+  if curl -fsSL "$CHECKSUMS_URL" -o "$CHECKSUMS_FILE"; then
+    # Get expected checksum for this zip
+    EXPECTED_CHECKSUM=$(grep "$ZIP_NAME" "$CHECKSUMS_FILE" | awk '{print $1}')
+
+    if [[ -n "$EXPECTED_CHECKSUM" ]]; then
+      # Calculate actual checksum (SHA512)
+      if command -v sha512sum &>/dev/null; then
+        ACTUAL_CHECKSUM=$(sha512sum "$TEMP_ZIP" | awk '{print $1}')
+      elif command -v shasum &>/dev/null; then
+        ACTUAL_CHECKSUM=$(shasum -a 512 "$TEMP_ZIP" | awk '{print $1}')
+      else
+        echo "⚠️  No SHA512 tool found, skipping checksum verification"
+        ACTUAL_CHECKSUM="$EXPECTED_CHECKSUM"
+      fi
+
+      if [[ "$ACTUAL_CHECKSUM" == "$EXPECTED_CHECKSUM" ]]; then
+        echo "✅ Checksum verified"
+      else
+        echo "❌ Checksum verification failed!"
+        echo "   Expected: $EXPECTED_CHECKSUM"
+        echo "   Got:      $ACTUAL_CHECKSUM"
+        rm -f "$TEMP_ZIP" "$CHECKSUMS_FILE"
+        exit 1
+      fi
+    else
+      echo "⚠️  Checksum not found for ${ZIP_NAME}, skipping verification"
+    fi
+
+    rm -f "$CHECKSUMS_FILE"
+  else
+    echo "⚠️  Could not download checksums file, skipping verification"
+  fi
+else
+  echo "⚠️  No checksums file available, skipping verification"
+fi
+
+# Extract and install
+echo "📦 Extracting Godots..."
+TEMP_DIR=$(mktemp -d)
+if ! unzip -q "$TEMP_ZIP" -d "$TEMP_DIR"; then
+  echo "❌ Failed to extract Godots"
+  rm -rf "$TEMP_ZIP" "$TEMP_DIR"
+  exit 1
+fi
+
+# Find the godots binary in the extracted files
+GODOTS_BINARY=$(find "$TEMP_DIR" -name "godots" -type f | head -n 1)
+if [[ -z "$GODOTS_BINARY" ]]; then
+  echo "❌ Could not find godots binary in zip"
+  rm -rf "$TEMP_ZIP" "$TEMP_DIR"
+  exit 1
+fi
 
 # Make executable and move to bin
-chmod +x /tmp/godots
-mv /tmp/godots "$BIN_DIR/godots"
+chmod +x "$GODOTS_BINARY"
+mv "$GODOTS_BINARY" "$BIN_DIR/godots"
+
+# Cleanup
+rm -rf "$TEMP_ZIP" "$TEMP_DIR"
 
 echo "✅ Godots installed successfully to $BIN_DIR/godots"
 echo ""

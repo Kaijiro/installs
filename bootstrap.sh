@@ -27,12 +27,7 @@ done
 install_brew() {
   if ! command -v brew &>/dev/null; then
     echo "Installing Homebrew..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    else
-      bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || true
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 }
 
@@ -41,16 +36,17 @@ apply_brewfile() {
   if [[ -f "$file" ]]; then
     echo "👉 Installing: $file"
 
-    # Run brew bundle and capture output
-    brew bundle --file="$file" 2>&1 | tee /tmp/brew_output.txt
+    # Parse Brewfile to extract package names
+    # Extract brew formulae (brew "package")
+    grep -E '^[[:space:]]*brew[[:space:]]+"[^"]+"' "$file" | \
+      sed -E 's/^[[:space:]]*brew[[:space:]]+"([^"]+)".*/\1/' >> "$manifestFile"
 
-    # Parse output to extract installed packages
-    # Look for lines like "Installing <package>" or "Downloading <package>"
-    grep -E "^(Installing|Downloading)" /tmp/brew_output.txt | \
-      sed -E 's/^(Installing|Downloading) //' | \
-      tee -a "$manifestFile" || true
+    # Extract casks (cask "package")
+    grep -E '^[[:space:]]*cask[[:space:]]+"[^"]+"' "$file" | \
+      sed -E 's/^[[:space:]]*cask[[:space:]]+"([^"]+)".*/\1/' >> "$manifestFile"
 
-    rm -f /tmp/brew_output.txt
+    # Run brew bundle
+    brew bundle --file="$file"
   else
     echo "⏩ Skipping missing file: $file"
   fi
@@ -101,3 +97,31 @@ fi
 
 echo ""
 echo "🎉 Installation done !"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📦 Installation Summary"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Show installed profiles
+echo "✅ Profiles installed:"
+echo "   • base"
+for p in $PROFILES; do
+  echo "   • $p"
+done
+echo ""
+
+# Show package count
+if [[ -f "$manifestFile" ]]; then
+  PACKAGE_COUNT=$(sort "$manifestFile" | uniq | wc -l | tr -d ' ')
+  echo "📊 Total packages: $PACKAGE_COUNT"
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Source the shell configuration to apply changes
+echo "🔄 Applying shell configuration..."
+if [[ -f "~/.zshrc" ]]; then
+  source "~/.zshrc" 2>/dev/null || true
+fi
