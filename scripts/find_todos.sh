@@ -11,20 +11,34 @@ GRAY='\033[0;90m'
 RESET='\033[0m'
 
 # --- Configuration ---
-if git show-ref --verify --quiet refs/heads/main; then BASE_BRANCH="main"
-elif git show-ref --verify --quiet refs/heads/master; then BASE_BRANCH="master"
-elif git show-ref --verify --quiet refs/heads/dev; then BASE_BRANCH="dev"
-else BASE_BRANCH="main"; fi
+BASE_BRANCH=""
+for arg in "$@"; do
+  case "$arg" in
+    --from=*) BASE_BRANCH="${arg#--from=}" ;;
+  esac
+done
+
+if [ -z "$BASE_BRANCH" ]; then
+  if git show-ref --verify --quiet refs/heads/main; then BASE_BRANCH="main"
+  elif git show-ref --verify --quiet refs/heads/master; then BASE_BRANCH="master"
+  elif git show-ref --verify --quiet refs/heads/dev; then BASE_BRANCH="dev"
+  else BASE_BRANCH="main"; fi
+fi
+
+if ! git show-ref --verify --quiet refs/heads/$BASE_BRANCH; then
+  printf "${BOLD_RED}❌ Error: branch '${BASE_BRANCH}' does not exist.${RESET}\n"
+  exit 1
+fi
 
 CURRENT_BRANCH=$(git branch --show-current)
 
-echo -e "${BOLD_PURPLE}🕵️  TODOS AUDIT 🕵️${RESET}"
-echo -e "Branch : ${CYAN}$CURRENT_BRANCH${RESET} (vs ${CYAN}$BASE_BRANCH${RESET})\n"
+printf "${BOLD_PURPLE}🕵️  TODOS AUDIT 🕵️${RESET}\n"
+printf "Branch : ${CYAN}$CURRENT_BRANCH${RESET} (vs ${CYAN}$BASE_BRANCH${RESET})\n\n"
 
 # ==============================================================================
 # ÉTAPE 1 : Branch history analysis
 # ==============================================================================
-echo -e "${BOLD_BLUE}1️⃣  Branch history debt :${RESET}"
+printf "${BOLD_BLUE}1️⃣  Branch history debt :${RESET}\n"
 git diff -U0 $BASE_BRANCH...HEAD | awk -v BLUE="$BOLD_BLUE" -v YEL="$YELLOW" -v GRY="$GRAY" -v RES="$RESET" '
     /^\+\+\+ b\// { cur=$NF; sub(/^b\//,"",cur) }
     /^\+/ && tolower($0) ~ /todo/ {
@@ -34,12 +48,12 @@ git diff -U0 $BASE_BRANCH...HEAD | awk -v BLUE="$BOLD_BLUE" -v YEL="$YELLOW" -v 
     }
     END { if (!f) print "   " GRY "Nothing found inside the branch commits." RES }
 '
-echo ""
+printf "\n"
 
 # ==============================================================================
 # ÉTAPE 2 : Local state analysis
 # ==============================================================================
-echo -e "${BOLD_BLUE}2️⃣  Ongoing changes :${RESET}"
+printf "${BOLD_BLUE}2️⃣  Ongoing changes :${RESET}\n"
 git diff -U0 HEAD | awk -v BLUE="$BOLD_BLUE" -v GRN="$GREEN" -v RED="$YELLOW" -v GRY="$GRAY" -v RES="$RESET" '
     /^diff --git/ { cur=substr($NF,3); next }
     /^(\+\+\+|---) / { next }
@@ -55,17 +69,17 @@ git diff -U0 HEAD | awk -v BLUE="$BOLD_BLUE" -v GRN="$GREEN" -v RED="$YELLOW" -v
     }
     END { if (!f) print "   " GRY "No uncommited changes." RES }
 '
-echo ""
+printf "\n"
 
 # ==============================================================================
 # ÉTAPE 3 : SYNTHÈSE FINALE
 # ==============================================================================
-echo -e "${BOLD_PURPLE}📝 Synthesis :${RESET}"
+printf "${BOLD_PURPLE}📝 Synthesis :${RESET}\n"
 
 git diff -U0 $BASE_BRANCH | awk -v BLUE="$BOLD_BLUE" -v RED="$BOLD_RED" -v GRY="$GRAY" -v RES="$RESET" '
     /^diff --git/ { cur=substr($NF,3); next }
     /^(\+\+\+|---) / { next }
-    
+
     /^\+/ && tolower($0) ~ /todo/ {
         c=substr($0,2); sub(/^[ \t]+/,"",c)
         print "👉 📂 " BLUE cur RES " : " RED c RES
@@ -79,4 +93,4 @@ git diff -U0 $BASE_BRANCH | awk -v BLUE="$BOLD_BLUE" -v RED="$BOLD_RED" -v GRY="
         }
     }
 '
-echo ""
+printf "\n"
