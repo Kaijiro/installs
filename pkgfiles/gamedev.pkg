@@ -1,0 +1,9 @@
+# ============================================================
+# Game Development Profile
+# ============================================================
+# Creative tooling. Godot itself is managed via Godots (post-install).
+# Format documented in base.pkg.
+
+gimp      cask:gimp       pacman:gimp       # Image editor
+blender   cask:blender    pacman:blender    # 3D modeling and animation
+audacity  cask:audacity   pacman:audacity   # Audio editor

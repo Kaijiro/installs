@@ -1,0 +1,9 @@
+# ============================================================
+# AWS Profile
+# ============================================================
+# Tools for AWS cloud development and infrastructure.
+# Format documented in base.pkg.
+
+awscli     brew:awscli      pacman:aws-cli-v2        # AWS CLI v2
+cfn-lint   brew:cfn-lint    pacman:python-cfn-lint   # CloudFormation linter
+aws-vault  cask:aws-vault   pacman:aws-vault         # Secure credential storage

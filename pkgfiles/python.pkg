@@ -1,0 +1,7 @@
+# ============================================================
+# Python Profile
+# ============================================================
+# uv manages Python packages, projects and interpreter versions.
+# Format documented in base.pkg.
+
+uv  brew:uv   pacman:uv

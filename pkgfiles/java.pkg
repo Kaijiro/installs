@@ -1,0 +1,8 @@
+# ============================================================
+# Java Profile
+# ============================================================
+# Java/JVM build tools. JDK versions are managed via SDKMAN (post-install).
+# Format documented in base.pkg.
+
+maven   brew:maven    pacman:maven
+gradle  brew:gradle   pacman:gradle

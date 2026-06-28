@@ -1,8 +1,0 @@
-# ============================================================
-# Python Profile
-# ============================================================
-# Tools for Python development
-
-# --- Package & Project Management ------------------------
-
-brew "uv"                # Fast Python package, project & version manager

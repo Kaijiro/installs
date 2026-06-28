@@ -1,21 +1,23 @@
 # Development Environment Setup
 
-Automated setup for development environments on new computers using Homebrew and profile-based installation.
+Automated, cross-platform setup for development environments on new computers using profile-based installation. The same profiles install via **Homebrew on macOS** and **pacman/AUR on Arch-based Linux** (e.g. EndeavourOS) from a single source of truth.
 
 ## Features
 
+- **Cross-platform**: One package definition per tool, resolved to Homebrew (macOS) or pacman/AUR/flatpak (Arch) at install time
 - **Profile-based installation**: Select from modular profiles (aws, java, node, python, gamedev)
-- **Automated tool installation**: Brewfiles for each domain
+- **Single source of truth**: `pkgfiles/*.pkg` map each tool to its per-OS package name
 - **Version managers**: Automatic installation of nvm, uv, SDKMAN, Godots
 - **Dotfiles management**: Symlink-based dotfiles with conditional linking
-- **Post-install automation**: Run scripts after tools are installed
+- **Post-install automation**: Run scripts after tools are installed (with optional `os:` gating)
 - **Interactive UI**: Uses `gum` for beautiful CLI prompts
 
 ## Requirements
 
-- macOS or Linux compatible with Homebrew
+- macOS, or an Arch-based Linux distribution (pacman)
 - Internet connection
 - curl (usually pre-installed)
+- On Arch: `sudo` access (for pacman); an AUR helper is bootstrapped automatically if missing
 
 ## Quick Start
 
@@ -29,10 +31,12 @@ cd installs
 ```
 
 The script will:
-1. Install Homebrew (if not present)
-2. Install `gum` for interactive prompts
+1. Detect your platform (macOS or Arch Linux)
+2. Set up the package manager prerequisites:
+   - **macOS**: install Homebrew (if missing) + `gum`
+   - **Arch**: sync/upgrade via pacman, install `gum`, bootstrap an AUR helper (`paru`) if none is present
 3. Let you select which profiles to install
-4. Install all tools from selected profiles
+4. Install all tools from selected profiles via the platform's package manager
 5. Run post-install scripts (version managers, dotfiles, etc.)
 
 ## Available Profiles
@@ -142,15 +146,46 @@ The post-install scripts automatically create these modular configs for version 
 
 ```
 .
-├── bootstrap.sh              # Main installation script
+├── bootstrap.sh              # Main installation script (OS detection + dispatch)
 ├── run-post-install.sh       # Post-install script runner
-├── brewfiles/                # Homebrew bundle files
+├── pkgfiles/                 # Cross-platform package definitions (*.pkg)
 ├── post-install/             # Post-installation scripts
 ├── post-install.yml          # Post-install script configuration
 ├── dotfiles/                 # Dotfiles
 ├── dotfiles.yml              # Dotfiles metadata
 └── README.md
 ```
+
+### Package definitions (`pkgfiles/*.pkg`)
+
+Each profile is a whitespace-delimited table mapping a canonical tool name to its
+package on each platform:
+
+```
+# <tool-key>        <darwin-spec>            <arch-spec>
+git                 brew:git                 pacman:git
+jetbrains-toolbox   cask:jetbrains-toolbox   aur:jetbrains-toolbox
+raycast             cask:raycast             -          # macOS-only: no Linux equivalent
+```
+
+- **spec** = `<backend>:<package-name>`, or `-` to declare the tool unavailable on that OS.
+- **backends**: `brew`, `cask` (macOS); `pacman`, `aur`, `flatpak` (Arch).
+- The **tool-key** is what lands in `.install-manifest` and what `dotfiles.yml` /
+  `post-install.yml` match against in their `requires:` lists — keep it stable across OSes.
+
+**Adding a tool**: add one line to the relevant `pkgfiles/*.pkg`, filling in the package
+name for each OS (use `-` where it genuinely has no equivalent). Verify names against
+[archlinux.org/packages](https://archlinux.org/packages/) and the
+[AUR](https://aur.archlinux.org/) for the Arch column.
+
+### Platform notes
+
+- macOS-only apps (e.g. Raycast, Stats) carry `-` in the Arch column and are reported as
+  skipped during a Linux install.
+- On Arch, `docker` installs the native engine (enable with `systemctl enable --now docker`);
+  swap to `aur:docker-desktop` in `pkgfiles/base.pkg` if you want GUI parity with the macOS cask.
+- Post-install scripts can be restricted to a platform with an `os: darwin` or `os: linux`
+  field in `post-install.yml`.
 
 ## Maintenance
 

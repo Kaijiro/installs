@@ -1,0 +1,41 @@
+# ============================================================
+# Base Installation Profile
+# ============================================================
+# Single source of truth for cross-platform package installation.
+#
+# Format (whitespace-delimited, 3 columns):
+#   <tool-key>   <darwin-spec>   <arch-spec>
+#
+#   spec = <backend>:<package-name>   |   "-" = unavailable on this OS
+#   backends: brew, cask        (macOS / Homebrew)
+#             pacman, aur, flatpak (Arch Linux)
+#
+# <tool-key> is the canonical name written to .install-manifest and matched
+# by dotfiles.yml / post-install.yml `requires:` entries. Keep it stable.
+#
+# A "-" in a column is an explicit declaration that the tool has no equivalent
+# on that OS (e.g. macOS-only apps). bootstrap.sh logs these as skipped.
+
+# --- CLI tools -------------------------------------------------------------
+git                  brew:git                       pacman:git
+jq                   brew:jq                        pacman:jq
+wget                 brew:wget                      pacman:wget
+curl                 brew:curl                      pacman:curl
+zsh                  brew:zsh                       pacman:zsh
+
+# --- Fonts -----------------------------------------------------------------
+fira-code-nerd-font  cask:font-fira-code-nerd-font  pacman:ttf-firacode-nerd
+
+# --- Development -----------------------------------------------------------
+jetbrains-toolbox    cask:jetbrains-toolbox         aur:jetbrains-toolbox
+sublime-text         cask:sublime-text              aur:sublime-text-4
+postman              cask:postman                   aur:postman-bin
+docker               cask:docker                    pacman:docker
+
+# --- Productivity (macOS-only) ---------------------------------------------
+raycast              cask:raycast                   -
+stats                cask:stats                     -
+
+# --- Browsers & Media ------------------------------------------------------
+brave                cask:brave-browser             aur:brave-bin
+deezer               cask:deezer                    aur:deezer

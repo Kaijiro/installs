@@ -1,0 +1,7 @@
+# ============================================================
+# Node.js Profile
+# ============================================================
+# No system packages: Node.js versions are managed via nvm, installed by the
+# nvm-install post-install script (triggered by the `node` profile).
+# This file exists so the profile is selectable in bootstrap.sh.
+# Format documented in base.pkg.

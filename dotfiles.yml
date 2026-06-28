@@ -5,11 +5,12 @@
 #
 # Format:
 #   dotfile_path:
-#     requires: [list of brew packages or commands]
+#     requires: [list of canonical tool keys]
 #     description: what this dotfile configures
 #
-# The dotfile_path is relative to the dotfiles/ directory
-# requires can be brew formula names, cask names, or command names
+# The dotfile_path is relative to the dotfiles/ directory.
+# `requires` entries are matched against the tool keys recorded in
+# .install-manifest (the first column of pkgfiles/*.pkg).
 
 dotfiles:
   .gitconfig:

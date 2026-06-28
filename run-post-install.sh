@@ -11,6 +11,13 @@ POST_INSTALL_CONFIG="$SCRIPT_DIR/post-install.yml"
 MANIFEST_FILE="$SCRIPT_DIR/.install-manifest"
 PROFILES_FILE="$SCRIPT_DIR/.selected-profiles"
 
+# Current OS for the `os:` filter in post-install.yml (darwin | linux)
+case "$(uname -s)" in
+  Darwin) CURRENT_OS="darwin" ;;
+  Linux)  CURRENT_OS="linux" ;;
+  *)      CURRENT_OS="unknown" ;;
+esac
+
 echo "📋 Running post-install scripts..."
 echo ""
 
@@ -92,19 +99,35 @@ check_profiles() {
   return 1
 }
 
-# Parse post-install.yml and collect scripts to run
-declare -A scripts_to_run
-declare -A script_priorities
+# Function to check if an os constraint allows running on this platform.
+# Empty constraint = run anywhere.
+os_allows() {
+  local os="$1"
+  [[ -z "$os" ]] || [[ "$os" == "$CURRENT_OS" ]]
+}
+
+# A script with neither requirements nor profiles is unconditional: it always
+# runs (e.g. dotfiles-setup). An empty list is written as "[]" in the YAML.
+is_unconditional() {
+  local reqs="$1" profs="$2"
+  [[ -z "$reqs" || "$reqs" == "[]" ]] && [[ -z "$profs" || "$profs" == "[]" ]]
+}
+
+# Parse post-install.yml and collect scripts to run.
+# Indexed array of "priority|name|file" entries — kept bash 3.2 compatible
+# (associative arrays require bash 4+, absent on stock macOS).
+scripts_to_run=()
 
 current_script=""
 current_file=""
 current_priority=50
 current_requirements=""
 current_profiles=""
+current_os=""
 
 while IFS= read -r line; do
   # Skip empty lines and comments
-  [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]] && continue
+  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
   # Detect script entry (2 spaces + name + :)
   if [[ "$line" =~ ^[[:space:]]{2}([a-z0-9_-]+):$ ]]; then
@@ -121,9 +144,17 @@ while IFS= read -r line; do
         should_run=true
       fi
 
+      if is_unconditional "$current_requirements" "$current_profiles"; then
+        should_run=true
+      fi
+
+      # OS constraint overrides: never run a script on the wrong platform
+      if ! os_allows "$current_os"; then
+        should_run=false
+      fi
+
       if $should_run; then
-        scripts_to_run["$current_script"]="$current_file"
-        script_priorities["$current_script"]=$current_priority
+        scripts_to_run+=("$current_priority|$current_script|$current_file")
       fi
     fi
 
@@ -133,6 +164,7 @@ while IFS= read -r line; do
     current_priority=50
     current_requirements=""
     current_profiles=""
+    current_os=""
     continue
   fi
 
@@ -145,6 +177,8 @@ while IFS= read -r line; do
     current_requirements="${BASH_REMATCH[1]}"
   elif [[ "$line" =~ ^[[:space:]]{4}profiles:[[:space:]]*(.+)$ ]]; then
     current_profiles="${BASH_REMATCH[1]}"
+  elif [[ "$line" =~ ^[[:space:]]{4}os:[[:space:]]*(.+)$ ]]; then
+    current_os="${BASH_REMATCH[1]}"
   fi
 done < "$POST_INSTALL_CONFIG"
 
@@ -160,9 +194,17 @@ if [[ -n "$current_script" ]] && [[ -n "$current_file" ]]; then
     should_run=true
   fi
 
+  if is_unconditional "$current_requirements" "$current_profiles"; then
+    should_run=true
+  fi
+
+  # OS constraint overrides: never run a script on the wrong platform
+  if ! os_allows "$current_os"; then
+    should_run=false
+  fi
+
   if $should_run; then
-    scripts_to_run["$current_script"]="$current_file"
-    script_priorities["$current_script"]=$current_priority
+    scripts_to_run+=("$current_priority|$current_script|$current_file")
   fi
 fi
 
@@ -175,10 +217,8 @@ fi
 echo "Found ${#scripts_to_run[@]} script(s) to run"
 echo ""
 
-# Sort by priority
-for script in "${!scripts_to_run[@]}"; do
-  echo "${script_priorities[$script]} $script ${scripts_to_run[$script]}"
-done | sort -n | while read priority name file; do
+# Sort by priority (numeric, on the leading priority field)
+printf '%s\n' "${scripts_to_run[@]}" | sort -n -t'|' -k1,1 | while IFS='|' read -r priority name file; do
   script_path="$POST_INSTALL_DIR/$file"
 
   if [[ -f "$script_path" ]] && [[ -x "$script_path" ]]; then
