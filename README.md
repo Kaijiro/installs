@@ -6,7 +6,7 @@ Automated setup for development environments on new computers using Homebrew and
 
 - **Profile-based installation**: Select from modular profiles (aws, java, node, python, gamedev)
 - **Automated tool installation**: Brewfiles for each domain
-- **Version managers**: Automatic installation of nvm, pyenv, SDKMAN, Godots
+- **Version managers**: Automatic installation of nvm, uv, SDKMAN, Godots
 - **Dotfiles management**: Symlink-based dotfiles with conditional linking
 - **Post-install automation**: Run scripts after tools are installed
 - **Interactive UI**: Uses `gum` for beautiful CLI prompts
@@ -61,9 +61,7 @@ Node.js development:
 
 ### Python
 Python development:
-- pyenv (version manager)
-- pyenv-virtualenv (virtual environment plugin)
-- pipx (isolated Python app installer)
+- uv (fast package, project & version manager)
 
 ### Gamedev
 Game development and creative tools:

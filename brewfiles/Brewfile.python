@@ -3,11 +3,6 @@
 # ============================================================
 # Tools for Python development
 
-# --- Version Management ----------------------------------
+# --- Package & Project Management ------------------------
 
-brew "pyenv"             # Python version manager
-brew "pyenv-virtualenv"  # pyenv plugin for virtual environments
-
-# --- Package Management ----------------------------------
-
-brew "pipx"              # Install Python applications in isolated environments
+brew "uv"                # Fast Python package, project & version manager
