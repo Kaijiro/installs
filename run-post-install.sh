@@ -30,12 +30,16 @@ fi
 # Read installed packages from manifest
 INSTALLED_PACKAGES=()
 if [[ -f "$MANIFEST_FILE" ]]; then
-  INSTALLED_PACKAGES=($(cat "$MANIFEST_FILE" | sort | uniq))
+  # Intentional word-splitting (one entry per line); mapfile is bash 4+ only.
+  # shellcheck disable=SC2207
+  INSTALLED_PACKAGES=($(sort -u "$MANIFEST_FILE"))
 fi
 
 # Read selected profiles
 SELECTED_PROFILES=()
 if [[ -f "$PROFILES_FILE" ]]; then
+  # Intentional word-splitting (one profile per line); mapfile is bash 4+ only.
+  # shellcheck disable=SC2207
   SELECTED_PROFILES=($(cat "$PROFILES_FILE"))
 fi
 
@@ -64,7 +68,8 @@ check_requirements() {
   fi
 
   # Extract array: [git, zsh] -> git zsh
-  local reqs=$(echo "$requirements" | sed 's/\[//g; s/\]//g; s/,/ /g')
+  local reqs
+  reqs=$(echo "$requirements" | sed 's/\[//g; s/\]//g; s/,/ /g')
 
   for req in $reqs; do
     if is_package_installed "$req"; then
@@ -85,7 +90,8 @@ check_profiles() {
   fi
 
   # Extract array: [gamedev, pro] -> gamedev pro
-  local profiles=$(echo "$required_profiles" | sed 's/\[//g; s/\]//g; s/,/ /g')
+  local profiles
+  profiles=$(echo "$required_profiles" | sed 's/\[//g; s/\]//g; s/,/ /g')
 
   for profile in $profiles; do
     for selected in "${SELECTED_PROFILES[@]}"; do

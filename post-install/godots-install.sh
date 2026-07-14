@@ -141,17 +141,37 @@ if ! unzip -q "$TEMP_ZIP" -d "$TEMP_DIR"; then
   exit 1
 fi
 
-# Find the godots binary in the extracted files
-GODOTS_BINARY=$(find "$TEMP_DIR" -name "godots" -type f | head -n 1)
-if [[ -z "$GODOTS_BINARY" ]]; then
-  echo "❌ Could not find godots binary in zip"
-  rm -rf "$TEMP_ZIP" "$TEMP_DIR"
-  exit 1
+if [[ "$OS_TYPE" == "linux" ]]; then
+  # Release ships a single arch-suffixed binary: Godots.x86_64 (capital G)
+  GODOTS_BINARY=$(find "$TEMP_DIR" -type f -iname "godots*" | head -n 1)
+  if [[ -z "$GODOTS_BINARY" ]]; then
+    echo "❌ Could not find Godots binary in zip"
+    rm -rf "$TEMP_ZIP" "$TEMP_DIR"
+    exit 1
+  fi
+  chmod +x "$GODOTS_BINARY"
+  mv "$GODOTS_BINARY" "$BIN_DIR/godots"
+else
+  # macOS release: outer zip contains a nested Godots.zip holding Godots.app
+  INNER_ZIP=$(find "$TEMP_DIR" -name "Godots.zip" | head -n 1)
+  if [[ -z "$INNER_ZIP" ]]; then
+    echo "❌ Could not find inner Godots.zip in macOS archive"
+    rm -rf "$TEMP_ZIP" "$TEMP_DIR"
+    exit 1
+  fi
+  INNER_DIR=$(mktemp -d)
+  unzip -q "$INNER_ZIP" -d "$INNER_DIR"
+  APP_SRC=$(find "$INNER_DIR" -name "Godots.app" -type d | head -n 1)
+  if [[ -z "$APP_SRC" ]]; then
+    echo "❌ Could not find Godots.app in macOS archive"
+    rm -rf "$TEMP_ZIP" "$TEMP_DIR" "$INNER_DIR"
+    exit 1
+  fi
+  echo "📦 Installing Godots.app to /Applications..."
+  cp -r "$APP_SRC" /Applications/Godots.app
+  ln -sf "/Applications/Godots.app/Contents/MacOS/Godots" "$BIN_DIR/godots"
+  rm -rf "$INNER_DIR"
 fi
-
-# Make executable and move to bin
-chmod +x "$GODOTS_BINARY"
-mv "$GODOTS_BINARY" "$BIN_DIR/godots"
 
 # Cleanup
 rm -rf "$TEMP_ZIP" "$TEMP_DIR"

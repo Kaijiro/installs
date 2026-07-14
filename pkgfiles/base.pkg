@@ -36,6 +36,9 @@ docker               cask:docker                    pacman:docker
 raycast              cask:raycast                   -
 stats                cask:stats                     -
 
+# --- Notes & Knowledge -----------------------------------------------------
+obsidian             cask:obsidian                  pacman:obsidian
+
 # --- Browsers & Media ------------------------------------------------------
 brave                cask:brave-browser             aur:brave-bin
 deezer               cask:deezer                    aur:deezer

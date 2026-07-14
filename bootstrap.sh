@@ -17,7 +17,7 @@ pkgfilesPath="pkgfiles"
 manifestFile=".install-manifest"
 
 # Initialize manifest file (clear if exists)
-> "$manifestFile"
+: > "$manifestFile"
 
 # Backend buckets (indexed arrays — bash 3.2 compatible for macOS system bash)
 BREW_FORMULAE=()
@@ -85,6 +85,10 @@ ensure_prereqs() {
     brew update
     command -v gum &>/dev/null || brew install gum
   else
+    # Refresh keyring first to prevent signature verification failures on
+    # systems whose trust DB hasn't been updated in a while.
+    echo "🔑 Updating archlinux-keyring..."
+    sudo pacman -S --needed --noconfirm archlinux-keyring
     # Full sync+upgrade once, up front: avoids pacman partial-upgrade breakage.
     echo "📦 Synchronizing and upgrading system (pacman -Syu)..."
     sudo pacman -Syu --needed --noconfirm gum git base-devel
