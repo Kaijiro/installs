@@ -28,6 +28,44 @@ fi
 
 echo "✅ SDKMAN installed successfully"
 
+# SDKMAN's own installer appends an init snippet directly to ~/.bashrc and
+# ~/.zshrc (unconditionally, not just to the shell in use). Since the modular
+# config below already sources sdkman-init.sh via .zshrc's ~/.dotfiles/ loop,
+# leaving the upstream zshrc snippet in place would source it twice per shell.
+# It always writes the block as the last lines of the file, so truncate from
+# its marker comment onward rather than editing the sourcing logic itself.
+strip_sdkman_snippet() {
+  local rcfile="$1"
+  [[ -f "$rcfile" ]] || return 0
+  grep -q 'sdkman-init.sh' "$rcfile" || return 0
+
+  # If this rc file is already a symlink (dotfiles-setup.sh ran in an earlier
+  # session), it points at the tracked dotfiles/ source file — editing it in
+  # place would silently mutate a git-tracked file. Bail and let the user
+  # decide instead of auto-truncating something version-controlled.
+  if [[ -L "$rcfile" ]]; then
+    echo "  ⚠️  $rcfile is a symlink (managed by dotfiles-setup.sh) — skipping automatic cleanup."
+    echo "     Remove the SDKMAN block manually from its target if duplicate init warnings appear."
+    return 0
+  fi
+
+  local marker_line
+  marker_line=$(grep -n '^#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK' "$rcfile" | head -1 | cut -d: -f1)
+  [[ -n "$marker_line" ]] || return 0
+
+  local cut_line=$((marker_line - 1))
+  if [[ $cut_line -gt 0 ]] && [[ -z "$(sed -n "${cut_line}p" "$rcfile")" ]]; then
+    cut_line=$((cut_line - 1))
+  fi
+
+  sed -i.bak "$((cut_line + 1)),\$d" "$rcfile"
+  rm -f "${rcfile}.bak"
+  echo "  Removed upstream SDKMAN init snippet from $rcfile (using modular config instead)"
+}
+
+strip_sdkman_snippet "$HOME/.bashrc"
+strip_sdkman_snippet "$HOME/.zshrc"
+
 # Create modular shell config for SDKMAN
 DOTFILES_DIR="$HOME/.dotfiles"
 mkdir -p "$DOTFILES_DIR"

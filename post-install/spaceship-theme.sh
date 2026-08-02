@@ -26,15 +26,10 @@ git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$THEME_DIR" 
 # Create symlink
 ln -sf "$THEME_DIR/spaceship.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/spaceship.zsh-theme"
 
-# Update .zshrc to use spaceship theme
-if [[ -f "$HOME/.zshrc" ]]; then
-  if grep -q '^ZSH_THEME=' "$HOME/.zshrc"; then
-    sed -i.bak 's/^ZSH_THEME=.*/ZSH_THEME="spaceship"/' "$HOME/.zshrc"
-    echo "✅ Updated .zshrc to use Spaceship theme"
-  else
-    echo 'ZSH_THEME="spaceship"' >> "$HOME/.zshrc"
-    echo "✅ Added Spaceship theme to .zshrc"
-  fi
-fi
+# ZSH_THEME is already hardcoded to "spaceship" in the tracked dotfiles/.zshrc
+# (the single source of truth deployed via dotfiles-setup.sh) — no rc file
+# needs editing here. Editing $HOME/.zshrc directly would also risk clobbering
+# it: once dotfiles-setup.sh has run, that path is a symlink into the tracked
+# file, and `sed -i` replaces symlinks with a plain file instead of following them.
 
 echo "✅ Spaceship theme installed successfully"

@@ -31,6 +31,12 @@ else
 fi
 
 # Download and install nvm
+# PROFILE=/dev/null stops the upstream installer from appending its own init
+# snippet to a shell rc file: it picks the file to edit by reading $SHELL,
+# which is still "bash" here regardless of oh-my-zsh's chsh (that only takes
+# effect on next login) — so it would silently land in ~/.bashrc, a file
+# .zshrc never sources. The modular config below is what actually loads nvm.
+export PROFILE=/dev/null
 echo "📥 Downloading and installing nvm $NVM_VERSION..."
 if ! curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash; then
   echo "❌ Failed to download or install nvm"

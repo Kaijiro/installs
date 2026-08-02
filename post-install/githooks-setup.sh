@@ -39,7 +39,9 @@ for hook_file in "$GITHOOKS_SOURCE"/*; do
     ln -s "$hook_file" "$target"
 
     echo "  ✅ Linked: $hook_name"
-    ((hook_count++))
+    # Plain assignment, not ((hook_count++)) — see dotfiles-setup.sh for why
+    # that form silently kills the script under `set -e` on the first hook.
+    hook_count=$((hook_count + 1))
   fi
 done
 

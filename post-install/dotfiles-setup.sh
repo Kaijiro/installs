@@ -138,14 +138,18 @@ while IFS= read -r line; do
         mkdir -p "$target_dir"
 
         create_symlink "$source_file" "$target_file"
-        ((count++))
+        # Plain assignment, not ((count++)): under `set -e`, the ((expr))
+        # compound command's exit status is the *pre-increment* value's
+        # truthiness, so the very first increment (0 -> 1) reads as failure
+        # and silently kills the script before any later dotfile is processed.
+        count=$((count + 1))
       else
         echo "  ⏩ Skipping $dotfile_path (file not found in dotfiles/)"
-        ((skipped++))
+        skipped=$((skipped + 1))
       fi
     else
       echo "  ⏩ Skipping $dotfile_path (requirements not met: $requirements)"
-      ((skipped++))
+      skipped=$((skipped + 1))
     fi
   fi
 done < "$DOTFILES_CONFIG"
